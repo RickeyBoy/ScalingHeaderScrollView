@@ -28,10 +28,12 @@ public enum SnapHeaderMode: Int {
     case afterFinishAccelerating
 }
 
-public struct ScalingHeaderScrollView<Header: View, Content: View>: View {
-
+public struct ScalingHeaderScrollView<Header: View, Stable: View, Content: View>: View {
     /// Content on the top, which will be collapsed
     public var header: Header
+    
+    /// Content on the top, which will be collapsed
+    public var stable: Stable
 
     /// Content on the bottom
     public var content: Content
@@ -162,10 +164,11 @@ public struct ScalingHeaderScrollView<Header: View, Content: View>: View {
     }
 
     // MARK: - Init
-
     public init(@ViewBuilder header: @escaping () -> Header,
+                @ViewBuilder stable: @escaping () -> Stable,
                 @ViewBuilder content: @escaping () -> Content) {
         self.header = header()
+        self.stable = stable()
         self.content = content()
         _progress = .constant(0)
         _scrollOffset = .constant(0)
@@ -204,13 +207,16 @@ public struct ScalingHeaderScrollView<Header: View, Content: View>: View {
                                 .opacity(pullToRefreshOpacity)
                                 .offset(y: getOffsetForHeader() + progressViewOffset)
                         }
-                        header
+                        ZStack {
+                            header
+                                .scaleEffect(headerScaleOnPullDown)
+                                .clipped(isClipped: headerIsClipped)
+                            stable
+                        }
                             .frame(height: headerHeight, alignment: headerAlignment)
-                            .clipped(isClipped: headerIsClipped)
                             .contentShape(Rectangle())
                             .offset(y: getOffsetForHeader())
                             .allowsHitTesting(true)
-                            .scaleEffect(headerScaleOnPullDown)
                     }
                     .offset(y: getGeometryReaderVsScrollView(scrollGeometry: scrollGeometry, globalGeometry: globalGeometry))
                 }
