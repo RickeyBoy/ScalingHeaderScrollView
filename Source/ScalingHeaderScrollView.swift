@@ -9,10 +9,13 @@
 import SwiftUI
 import Introspect
 
-public struct ScalingHeaderScrollView<Header: View, Content: View>: View {
+public struct ScalingHeaderScrollView<Header: View, Stable: View, Content: View>: View {
     
     /// Content on the top, which will be collapsed
     public var header: Header
+    
+    /// Content on the top, which will be collapsed
+    public var stable: Stable
 
     /// Content on the bottom
     public var content: Content
@@ -92,8 +95,9 @@ public struct ScalingHeaderScrollView<Header: View, Content: View>: View {
     
     // MARK: - Init
     
-    public init(@ViewBuilder header: @escaping () -> Header, @ViewBuilder content: @escaping () -> Content) {
+    public init(@ViewBuilder header: @escaping () -> Header, @ViewBuilder stable: @escaping () -> Stable, @ViewBuilder content: @escaping () -> Content) {
         self.header = header()
+        self.stable = stable()
         self.content = content()
         _progress = .constant(0)
         _isLoading = .constant(false)
@@ -127,12 +131,16 @@ public struct ScalingHeaderScrollView<Header: View, Content: View>: View {
                             .offset(y: getOffsetForHeader() + progressViewOffset)
                     }
                     
-                    header
-                        .frame(height: headerHeight)
-                        .clipped()
-                        .offset(y: getOffsetForHeader())
-                        .allowsHitTesting(true)
-                        .scaleEffect(headerScaleOnPullDown)
+                    ZStack {
+                        header
+                            .scaleEffect(headerScaleOnPullDown)
+                            .clipped()
+                        stable
+                    }
+                    .frame(height: headerHeight * headerScaleOnPullDown)
+                    .offset(y: getOffsetForHeader())
+                    .allowsHitTesting(true)
+                        
                 }
                 .offset(y: getGeometryReaderVsScrollView(geometry))
             }
